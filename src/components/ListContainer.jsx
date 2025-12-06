@@ -8,7 +8,7 @@ import { CSS } from '@dnd-kit/utilities';
 // ----------------------------------------
 // 輔助元件：渲染單一待辦事項項目 (TodoItem)
 // ----------------------------------------
-const TodoItem = ({ todo, toggleComplete, deleteTodo, editTodo }) => {
+const TodoItem = ({ todo, category, toggleComplete, deleteTodo, editTodo }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(todo.text);
 
@@ -87,7 +87,7 @@ const TodoItem = ({ todo, toggleComplete, deleteTodo, editTodo }) => {
         toggleComplete(todo.id);
     }
   };
-
+  const isCompletedList = category === '完成';
   return (
     <li
       ref={setNodeRef}
@@ -118,15 +118,20 @@ const TodoItem = ({ todo, toggleComplete, deleteTodo, editTodo }) => {
           <span style={{ fontSize: '18px' }}>⋮⋮</span>
         </div>
 
-        {/* 點擊 Checkbox 時，阻止事件冒泡 */}
-        <input 
+                {/* 點擊 Checkbox 時，阻止事件冒泡 */}
+                <input 
           className="form-check-input me-3" 
           type="checkbox" 
           checked={todo.isCompleted} 
           onChange={(e) => { 
+              e.preventDefault();
               e.stopPropagation(); 
               toggleComplete(todo.id);
           }}
+          onClick={(e) => {
+              e.stopPropagation();
+          }}
+          style={{ pointerEvents: 'auto', zIndex: 10 }}
         />
         
         {/* 編輯模式切換 */}
@@ -147,38 +152,54 @@ const TodoItem = ({ todo, toggleComplete, deleteTodo, editTodo }) => {
             className="me-auto"
           >
             {todo.text}
+            {/* 在「完成」清單中顯示類別標籤 */}
+            {isCompletedList && todo.category && todo.category !== '完成' && (
+              <span 
+                className={`badge ${
+                  todo.category === '工作' 
+                    ? 'bg-primary' 
+                    : todo.category === '生活' 
+                    ? 'bg-success' 
+                    : 'bg-secondary'
+                } ms-3`}
+                style={{ fontSize: '0.75rem' }}
+              >
+                {todo.category === '工作' ? '💼 工作' : todo.category === '生活' ? '🏡 生活' : todo.category}
+              </span>
+            )}
           </span>
         )}
       </div>
       
-      {/* 操作按鈕 (阻止整個按鈕區域的點擊事件冒泡) */}
-      <div onClick={(e) => e.stopPropagation()}> 
-        {isEditing ? (
+            {/* 操作按鈕 - 只在非「完成」清單中顯示 */}
+            {!isCompletedList && (
+        <div onClick={(e) => e.stopPropagation()}> 
+          {isEditing ? (
+            <button 
+              className="btn btn-success btn-sm me-2" 
+              onClick={handleSave}
+              type="button"
+            >
+              💾 儲存
+            </button>
+          ) : (
+            <button 
+              className="btn btn-info btn-sm me-2" 
+              onClick={handleEditClick}
+              disabled={todo.isCompleted} 
+            >
+              ✏️ 編輯
+            </button>
+          )}
+          
           <button 
-            className="btn btn-success btn-sm me-2" 
-            onClick={handleSave}
-            type="button"
+            className="btn btn-danger btn-sm" 
+            onClick={handleDelete}
           >
-            💾 儲存
+            🗑️ 刪除
           </button>
-        ) : (
-          <button 
-            className="btn btn-info btn-sm me-2" 
-            onClick={handleEditClick}
-            disabled={todo.isCompleted} 
-          >
-            ✏️ 編輯
-          </button>
-        )}
-        
-        <button 
-          className="btn btn-danger btn-sm" 
-          onClick={handleDelete}
-        >
-          🗑️ 刪除
-        </button>
-      </div>
-
+        </div>
+      )}
     </li>
   );
 };
@@ -201,7 +222,7 @@ const ListContainer = ({
   return (
     <div className="card shadow h-100">
       <div className="card-header bg-dark text-white text-center">
-        {category === '工作' ? '💼 工作清單' : '🏡 生活清單'} ({todos.length} 項)
+        {category === '工作' ? '💼 工作清單' : category === '生活' ? '🏡 生活清單' : '🎉 完成清單'} ({todos.length} 項)
       </div>
       <div className="card-body p-0">
         <ul
@@ -218,6 +239,7 @@ const ListContainer = ({
               <TodoItem
                 key={todo.id}
                 todo={todo}
+                category={category}
                 toggleComplete={toggleComplete}
                 deleteTodo={deleteTodo}
                 editTodo={editTodo}

@@ -4,7 +4,7 @@ import Header from './components/Header';
 import InputArea from './components/InputArea';
 import ListSection from './components/ListSection';
 
-const CATEGORIES = ['工作', '生活'];
+const CATEGORIES = ['工作', '生活', '完成'];
 
 function App() {
   const [todos, setTodos] = useState([]);

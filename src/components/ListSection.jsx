@@ -33,10 +33,18 @@ const ListSection = ({
   
   // 篩選待辦事項並按時間戳降序排序
   const lists = categories.reduce((acc, category) => {
+    if(category === '完成') {
+      // 「完成」列表：顯示所有 isCompleted=true 的項目
       acc[category] = todos
-          .filter(todo => todo.category === category)
+          .filter(todo => todo.isCompleted)
           .sort((a, b) => b.timestamp - a.timestamp);
-      return acc;
+    } else {
+      // 其他類別（工作、生活）：只顯示 isCompleted=false 且屬於該類別的項目
+      acc[category] = todos
+          .filter(todo => todo.category === category && !todo.isCompleted)
+          .sort((a, b) => b.timestamp - a.timestamp);
+    }
+    return acc;
   }, {});
 
   return (
