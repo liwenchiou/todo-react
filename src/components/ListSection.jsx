@@ -24,11 +24,25 @@ const ListSection = ({
     const draggedTodo = todos.find(todo => todo.id === active.id);
     if (!draggedTodo) return;
 
-    // 檢查是否拖到不同的類別
     const targetCategory = over.id;
-    if (draggedTodo.category !== targetCategory && categories.includes(targetCategory)) {
-      changeCategory(active.id, targetCategory);
-    }
+    
+    // 規則 1: 禁止將工作或生活的項目拖到「完成」清單
+    // 檢查 isCompleted 而不是 category，因為完成清單顯示所有 isCompleted=true 的項目
+    if (targetCategory === '完成' && !draggedTodo.isCompleted) {
+        return; // 阻止拖動
+      }
+  
+      // 規則 2: 如果從「完成」清單拖到「工作」或「生活」，設定 isCompleted = false
+      // 檢查 isCompleted 而不是 category，因為完成清單中的項目 category 可能還是「工作」或「生活」
+      if (draggedTodo.isCompleted && (targetCategory === '工作' || targetCategory === '生活')) {
+        changeCategory(active.id, targetCategory, false); // false 表示未完成
+        return;
+      }
+  
+      // 其他情況：工作 <-> 生活之間的拖動（保持 isCompleted 狀態）
+      if (draggedTodo.category !== targetCategory && categories.includes(targetCategory)) {
+        changeCategory(active.id, targetCategory); // 不指定 shouldSetCompleted，保持原值
+      }
   };
   
   // 篩選待辦事項並按時間戳降序排序
@@ -59,6 +73,7 @@ const ListSection = ({
               toggleComplete={toggleComplete}
               deleteTodo={deleteTodo}
               editTodo={editTodo}
+              changeCategory={changeCategory}
             />
           </div>
         ))}
@@ -66,8 +81,6 @@ const ListSection = ({
     </DndContext>
   );
 };
-
-// ... existing code ...
 
 ListSection.propTypes = {
   todos: PropTypes.arrayOf(PropTypes.object).isRequired,

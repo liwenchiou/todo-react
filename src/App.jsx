@@ -66,20 +66,22 @@ function App() {
     );
   };
   
-  // 拖曳改變類別 (DnD)
-  const changeCategory = (id, newCategory) => {
-    setTodos(prevTodos =>
-        prevTodos.map(todo => 
-            todo.id === id 
-                ? { 
-                    ...todo, 
-                    category: newCategory,
-                    timestamp: Date.now(), // 更新時間戳，讓它成為新類別的第一個項目
-                  } 
-                : todo
-        )
-    );
-  }
+// 拖曳改變類別 (DnD)
+const changeCategory = (id, newCategory, shouldSetCompleted = null) => {
+  setTodos(prevTodos =>
+      prevTodos.map(todo => 
+          todo.id === id 
+              ? { 
+                  ...todo, 
+                  category: newCategory,
+                  // 如果指定了 shouldSetCompleted，使用該值；否則保持原值
+                  isCompleted: shouldSetCompleted !== null ? shouldSetCompleted : todo.isCompleted,
+                  timestamp: Date.now(), // 更新時間戳，讓它成為新類別的第一個項目
+                } 
+              : todo
+      )
+  );
+}
 
   // 4. 渲染邏輯
   if (isLoading) {
