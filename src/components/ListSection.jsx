@@ -4,14 +4,15 @@ import PropTypes from 'prop-types';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import ListContainer from './ListContainer';
 
-const ListSection = ({ 
-  todos, 
-  categories, 
-  toggleComplete, 
-  deleteTodo, 
+const ListSection = ({
+  todos,
+  categories,
+  toggleComplete,
+  deleteTodo,
   editTodo,
   changeCategory
 }) => {
+
   // 處理拖曳結束的邏輯
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -25,60 +26,81 @@ const ListSection = ({
     if (!draggedTodo) return;
 
     const targetCategory = over.id;
-    
+
     // 規則 1: 禁止將工作或生活的項目拖到「完成」清單
-    // 檢查 isCompleted 而不是 category，因為完成清單顯示所有 isCompleted=true 的項目
     if (targetCategory === '完成' && !draggedTodo.isCompleted) {
-        return; // 阻止拖動
-      }
-  
-      // 規則 2: 如果從「完成」清單拖到「工作」或「生活」，設定 isCompleted = false
-      // 檢查 isCompleted 而不是 category，因為完成清單中的項目 category 可能還是「工作」或「生活」
-      if (draggedTodo.isCompleted && (targetCategory === '工作' || targetCategory === '生活')) {
-        changeCategory(active.id, targetCategory, false); // false 表示未完成
-        return;
-      }
-  
-      // 其他情況：工作 <-> 生活之間的拖動（保持 isCompleted 狀態）
-      if (draggedTodo.category !== targetCategory && categories.includes(targetCategory)) {
-        changeCategory(active.id, targetCategory); // 不指定 shouldSetCompleted，保持原值
-      }
+      return;
+    }
+
+    // 規則 2: 如果從「完成」清單拖到「工作」或「生活」，設定 isCompleted = false
+    if (draggedTodo.isCompleted && (targetCategory === '工作' || targetCategory === '生活')) {
+      changeCategory(active.id, targetCategory, false);
+      return;
+    }
+
+    // 其他情況：工作 <-> 生活之間的拖動
+    if (draggedTodo.category !== targetCategory && categories.includes(targetCategory)) {
+      changeCategory(active.id, targetCategory);
+    }
   };
-  
-  // 篩選待辦事項並按時間戳降序排序
+
+  // 篩選與排序邏輯
   const lists = categories.reduce((acc, category) => {
-    if(category === '完成') {
-      // 「完成」列表：顯示所有 isCompleted=true 的項目
+    if (category === '完成') {
       acc[category] = todos
-          .filter(todo => todo.isCompleted)
-          .sort((a, b) => b.timestamp - a.timestamp);
+        .filter(todo => todo.isCompleted)
+        .sort((a, b) => b.timestamp - a.timestamp);
     } else {
-      // 其他類別（工作、生活）：只顯示 isCompleted=false 且屬於該類別的項目
       acc[category] = todos
-          .filter(todo => todo.category === category && !todo.isCompleted)
-          .sort((a, b) => b.timestamp - a.timestamp);
+        .filter(todo => todo.category === category && !todo.isCompleted)
+        .sort((a, b) => b.timestamp - a.timestamp);
     }
     return acc;
   }, {});
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <h2 className="mt-5 mb-3 text-primary">📑 待辦事項清單</h2>
-      <div className="row">
-        {categories.map(category => (
-          <div key={category} className="col-12 col-lg-6 mb-4">
-            <ListContainer 
-              category={category}
-              todos={lists[category]} 
-              toggleComplete={toggleComplete}
-              deleteTodo={deleteTodo}
-              editTodo={editTodo}
-              changeCategory={changeCategory}
-            />
-          </div>
-        ))}
-      </div>
-    </DndContext>
+    <div className='container mx-auto'>
+      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        {/* 標題：使用 Tailwind 設定顏色與字體 */}
+        <h2 className="mt-12 mb-6 text-2xl font-bold text-blue-600 flex items-center gap-2 justify-center">
+          <span className="text-3xl ">📑</span> 待辦事項清單
+        </h2>
+
+        {/* 佈局核心：
+        - grid: 使用網格佈局
+        - grid-cols-1: 手機版預設 1 欄
+        - lg:grid-cols-12: 桌機版切分為 12 欄
+        - gap-6: 卡片之間的間距
+      */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {categories.map(category => (
+            <div
+              key={category}
+              className={`
+              col-span-1 
+              lg:col-span-6 
+              ${category === '完成' ? 'lg:col-span-12 mt-4' : ''}
+            `}
+            >
+              {/* 上面的邏輯解釋：
+              1. 預設寬度 (lg:col-span-6) 會讓「工作」與「生活」在桌機版並排顯示。
+              2. 判斷如果是「完成」類別，則佔滿全寬 (lg:col-span-12)，這樣版面會比較平衡。
+              3. 如果你希望三個都一樣大並排，請將上面的 ${category === '完成' ? ... } 移除，只留 lg:col-span-6。
+            */}
+              <ListContainer
+                category={category}
+                todos={lists[category]}
+                toggleComplete={toggleComplete}
+                deleteTodo={deleteTodo}
+                editTodo={editTodo}
+                changeCategory={changeCategory}
+              />
+            </div>
+          ))}
+        </div>
+      </DndContext>
+    </div>
+
   );
 };
 

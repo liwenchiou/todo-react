@@ -12,7 +12,7 @@ const InputArea = ({ categories, addTodo }) => {
     setValidated(true);
 
     if (inputText.trim() === '' || selectedCategory === '') {
-      return; 
+      return;
     }
 
     addTodo(inputText.trim(), selectedCategory);
@@ -20,73 +20,82 @@ const InputArea = ({ categories, addTodo }) => {
     // 清空表單
     setInputText('');
     setSelectedCategory('工作');
-    setValidated(false); 
+    setValidated(false);
   };
 
   // 過濾掉「完成」類別
   const availableCategories = categories.filter(item => item !== "完成");
 
   return (
-    <div className="card shadow-sm mb-4">
-      <div className="card-body">
-        <h5 className="card-title text-center text-secondary">新增待辦事項</h5>
-        
+    <div className="flex justify-center ">
+      <div className="container">
+        <h5 className="text-3xl text-center text-secondary mb-8">新增待辦事項</h5>
+
         <form onSubmit={handleSubmit} className={validated ? 'was-validated' : ''} noValidate>
-          <div className="row g-3 align-items-end">
-            
-            {/* 1. 輸入框 */}
-            <div className="col-12 col-md-6">
-              <label htmlFor="todoInput" className="form-label">待辦事項內容</label>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end p-4 bg-white rounded-xl shadow-sm border border-gray-100">
+
+            {/* 1. 輸入框 - 桌機佔 5/12 */}
+            <div className="lg:col-span-5 space-y-1.5">
+              <label htmlFor="todoInput" className="block text-sm font-semibold text-gray-600 ml-1">
+                待辦事項
+              </label>
               <input
                 id="todoInput"
                 type="text"
-                className="form-control"
-                placeholder="請輸入待辦事項內容"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400"
+                placeholder="想做點什麼？"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 required
               />
-              <div className="invalid-feedback">待辦事項內容不可為空。</div>
             </div>
 
-            {/* 2. 類別選擇 (單選按鈕) */}
-            <div className="col-12 col-md-4">
-              <label className="form-label d-block mb-2">選擇類別</label>
-              <div className="btn-group w-100" role="group" aria-label="類別選擇">
+            {/* 2. 類別選擇 - 桌機佔 5/12 */}
+            <div className="lg:col-span-5 space-y-1.5">
+              <label className="block text-sm font-semibold text-gray-600 ml-1">
+                分類
+              </label>
+              <div className="flex bg-gray-100 p-1 rounded-lg">
                 {availableCategories.map((category) => (
-                  <React.Fragment key={category}>
+                  <label
+                    key={category}
+                    className={`flex-1 cursor-pointer text-center py-2 px-2 rounded-md text-sm font-medium transition-all duration-200
+            ${selectedCategory === category
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'}
+          `}
+                  >
                     <input
                       type="radio"
-                      className="btn-check"
+                      className="sr-only"
                       name="category"
-                      id={`category-${category}`}
                       value={category}
                       checked={selectedCategory === category}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       required
                     />
-                    <label
-                      className={`btn btn-outline-primary ${
-                        selectedCategory === category ? 'active' : ''
-                      }`}
-                      htmlFor={`category-${category}`}
-                    >
-                      {category === '工作' ? '💼 工作' : category === '生活' ? '🏡 生活' : category}
-                    </label>
-                  </React.Fragment>
+                    {category === '工作' ? '💼 工作' : category === '生活' ? '🏡 生活' : category}
+                  </label>
                 ))}
               </div>
-              {validated && selectedCategory === '' && (
-                <div className="text-danger small mt-1">請務必選擇對應的類別。</div>
-              )}
             </div>
 
-            {/* 3. 送出按鈕 (Button) */}
-            <div className="col-12 col-md-2">
-              <button type="submit" className="btn btn-primary w-100">
-                送出
+            {/* 3. 送出按鈕 - 桌機佔 2/12 */}
+            <div className="lg:col-span-2">
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold py-2.5 rounded-lg shadow-md transition-all whitespace-nowrap"
+              >
+                新增
               </button>
             </div>
+
+            {/* 錯誤訊息 (跨滿全行顯示) */}
+            {validated && selectedCategory === '' && (
+              <div className="lg:col-span-12 text-red-500 text-xs mt-[-10px] ml-1">
+                * 請務必選擇一個類別
+              </div>
+            )}
           </div>
         </form>
       </div>

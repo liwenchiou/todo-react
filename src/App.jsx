@@ -1,112 +1,46 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
-import Header from './components/Header';
-import InputArea from './components/InputArea';
-import ListSection from './components/ListSection';
-
-const CATEGORIES = ['工作', '生活', '完成'];
+import { supabase } from './utils/supabaseClient'; // 確保路徑正確
+import TodoList from './pages/TodoList';
+import Auth from './components/Auth'; // 剛才建立的登入組件
 
 function App() {
-  const [todos, setTodos] = useState([]);
+  const [session, setSession] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. 資料載入 (從 LocalStorage 讀取)
   useEffect(() => {
-    const loadData = () => {
-      const storedTodos = JSON.parse(localStorage.getItem('react-todo-list')) || [];
-      setTodos(storedTodos);
+    // 1. 初始化：檢查目前的登入狀態
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
       setIsLoading(false);
-    };
-    setTimeout(loadData, 1000); // 模擬載入延遲 1 秒
+    });
+
+    // 2. 監聽：當登入、登出或密碼更改時，自動更新 session 狀態
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // 2. 資料儲存 (更新到 LocalStorage)
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem('react-todo-list', JSON.stringify(todos));
-    }
-  }, [todos, isLoading]);
-
-  // 3. 核心操作函數
-
-  // 新增待辦事項
-  const addTodo = (text, category) => {
-    if (!text || !category) return;
-    const newTodo = {
-      id: Date.now().toString(), 
-      text,
-      category,
-      isCompleted: false,
-      timestamp: Date.now(),
-    };
-    setTodos(prevTodos => [newTodo, ...prevTodos]);
-  };
-
-  // 切換完成狀態
-  const toggleComplete = (id) => {
-    setTodos(prevTodos =>
-      prevTodos.map(todo =>
-        todo.id === id ? { ...todo, isCompleted: !todo.isCompleted } : todo
-      )
-    );
-  };
-
-  // 刪除待辦事項
-  const deleteTodo = (id) => {
-    setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
-  };
-
-  // 編輯待辦事項內容
-  const editTodo = (id, newText) => {
-    if (!newText.trim()) return;
-    setTodos(prevTodos =>
-      prevTodos.map(todo =>
-        todo.id === id ? { ...todo, text: newText.trim() } : todo
-      )
-    );
-  };
-  
-// 拖曳改變類別 (DnD)
-const changeCategory = (id, newCategory, shouldSetCompleted = null) => {
-  setTodos(prevTodos =>
-      prevTodos.map(todo => 
-          todo.id === id 
-              ? { 
-                  ...todo, 
-                  category: newCategory,
-                  // 如果指定了 shouldSetCompleted，使用該值；否則保持原值
-                  isCompleted: shouldSetCompleted !== null ? shouldSetCompleted : todo.isCompleted,
-                  timestamp: Date.now(), // 更新時間戳，讓它成為新類別的第一個項目
-                } 
-              : todo
-      )
-  );
-}
-
-  // 4. 渲染邏輯
+  // 載入中畫面（避免切換時閃爍）
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="container py-5">
-      <Header />
-      <InputArea categories={CATEGORIES} addTodo={addTodo} />
-      <ListSection 
-        todos={todos} 
-        categories={CATEGORIES} 
-        toggleComplete={toggleComplete}
-        deleteTodo={deleteTodo}
-        editTodo={editTodo}
-        changeCategory={changeCategory}
-      />
-    </div>
+    <>
+      {/* 根據 session 是否存在來決定顯示內容 */}
+      {!session ? (
+        <Auth />
+      ) : (
+        <TodoList session={session} />
+      )}
+    </>
   );
 }
 
