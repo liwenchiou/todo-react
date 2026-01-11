@@ -12,7 +12,6 @@ const TodoItem = ({ todo, category, toggleComplete, deleteTodo, editTodo }) => {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editText, setEditText] = React.useState(todo.text);
 
-  // 當 todo.text 更新時，同步更新編輯文字狀態
   React.useEffect(() => {
     setEditText(todo.text);
   }, [todo.text]);
@@ -53,7 +52,6 @@ const TodoItem = ({ todo, category, toggleComplete, deleteTodo, editTodo }) => {
 
   const handleBlur = (e) => {
     const relatedTarget = e.relatedTarget;
-    // 如果焦點移動到「儲存」按鈕上，不觸發自動儲存以免衝突
     if (relatedTarget && relatedTarget.closest('.save-btn')) {
       return;
     }
@@ -82,7 +80,6 @@ const TodoItem = ({ todo, category, toggleComplete, deleteTodo, editTodo }) => {
       {...attributes}
     >
       <div className="flex items-center flex-grow min-w-0">
-        {/* 1. 拖動手柄 */}
         <div
           {...listeners}
           onClick={(e) => e.stopPropagation()}
@@ -91,7 +88,6 @@ const TodoItem = ({ todo, category, toggleComplete, deleteTodo, editTodo }) => {
           <span className="text-xl select-none">⋮⋮</span>
         </div>
 
-        {/* 2. Checkbox 區域 */}
         <div className="flex items-center mr-3" onClick={(e) => e.stopPropagation()}>
           <input
             type="checkbox"
@@ -101,7 +97,6 @@ const TodoItem = ({ todo, category, toggleComplete, deleteTodo, editTodo }) => {
           />
         </div>
 
-        {/* 3. 文字內容 / 編輯輸入框 */}
         <div className="flex-grow min-w-0 pr-2">
           {isEditing ? (
             <input
@@ -120,7 +115,6 @@ const TodoItem = ({ todo, category, toggleComplete, deleteTodo, editTodo }) => {
                 {todo.text}
               </span>
 
-              {/* 完成清單中的類別標籤 */}
               {isCompletedList && todo.category && todo.category !== '完成' && (
                 <span className={`
                   shrink-0 px-2 py-0.5 rounded text-[10px] font-bold
@@ -135,7 +129,6 @@ const TodoItem = ({ todo, category, toggleComplete, deleteTodo, editTodo }) => {
         </div>
       </div>
 
-      {/* 4. 操作按鈕區域 */}
       {!isCompletedList && (
         <div className="flex gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
           {isEditing ? (
@@ -175,7 +168,20 @@ const TodoItem = ({ todo, category, toggleComplete, deleteTodo, editTodo }) => {
 const ListContainer = ({ category, todos, toggleComplete, deleteTodo, editTodo }) => {
   const { setNodeRef, isOver } = useDroppable({ id: category });
 
-  // 根據類別動態決定 Header 顏色
+  // 1. 三天內的過濾邏輯
+  const filteredTodos = React.useMemo(() => {
+    if (category !== '完成') return todos;
+
+    const THREE_DAYS_IN_MS = 3 * 24 * 60 * 60 * 1000;
+    const now = new Date().getTime();
+
+    return todos.filter(todo => {
+      // 解析帶有時區的時間字串
+      const todoTime = new Date(todo.timestamp).getTime();
+      return (now - todoTime) <= THREE_DAYS_IN_MS;
+    });
+  }, [todos, category]);
+
   const headerStyles = {
     '工作': 'bg-blue-600',
     '生活': 'bg-emerald-600',
@@ -189,13 +195,18 @@ const ListContainer = ({ category, todos, toggleComplete, deleteTodo, editTodo }
         <div className="flex items-center justify-center gap-2">
           <span>{category === '工作' ? '💼 工作清單' : category === '生活' ? '🏡 生活清單' : '🎉 完成清單'}</span>
           <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-normal">
-            {todos.length}
+            {filteredTodos.length}
           </span>
         </div>
       </div>
 
       {/* 列表內容區域 */}
-      <div className="flex-grow overflow-y-auto bg-gray-50/30">
+      {/* 2. 針對「完成」清單限制高度與滾動 */}
+      <div 
+        className={`flex-grow overflow-y-auto bg-gray-50/30 ${
+          category === '完成' ? 'max-h-[285px] scrollbar-thin scrollbar-thumb-gray-300' : ''
+        }`}
+      >
         <ul
           ref={setNodeRef}
           className={`
@@ -203,16 +214,16 @@ const ListContainer = ({ category, todos, toggleComplete, deleteTodo, editTodo }
             ${isOver ? 'bg-blue-50 ring-2 ring-inset ring-blue-200' : 'bg-transparent'}
           `}
         >
-          {todos.length === 0 ? (
+          {filteredTodos.length === 0 ? (
             <li className="flex flex-col items-center justify-center py-12 px-6 text-center text-gray-400">
               <div className="text-3xl mb-2 opacity-30">📭</div>
               <p className="text-xs">
                 目前沒有項目<br />
-                可將事項拖曳至此分類
+                {category === '完成' ? '三天內無完成事項' : '可將事項拖曳至此分類'}
               </p>
             </li>
           ) : (
-            todos.map((todo) => (
+            filteredTodos.map((todo) => (
               <TodoItem
                 key={todo.id}
                 todo={todo}
