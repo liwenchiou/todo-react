@@ -43,7 +43,7 @@ const InputArea = ({ categories, addTodo }) => {
                 id="todoInput"
                 type="text"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-gray-400"
-                placeholder="想做點什麼？"
+                placeholder="要做點什麼？"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 required

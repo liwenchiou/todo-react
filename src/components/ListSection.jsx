@@ -47,8 +47,16 @@ const ListSection = ({
   // 篩選與排序邏輯
   const lists = categories.reduce((acc, category) => {
     if (category === '完成') {
+      const THREE_DAYS_IN_MS = 3 * 24 * 60 * 60 * 1000;
+      const now = new Date(); // 獲取當前時間物件
       acc[category] = todos
-        .filter(todo => todo.isCompleted)
+        .filter(todo => {
+        // 將字串格式轉換為毫秒時間戳
+        const todoTime = new Date(todo.timestamp).getTime();
+        const isWithinThreeDays = (now.getTime() - todoTime) <= THREE_DAYS_IN_MS;
+        
+        return todo.isCompleted && isWithinThreeDays;
+    })
         .sort((a, b) => b.timestamp - a.timestamp);
     } else {
       acc[category] = todos

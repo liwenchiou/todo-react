@@ -16,7 +16,7 @@ const Auth = () => {
                 // 註冊邏輯
                 const { error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
-                alert('註冊成功！請檢查信箱確認驗證信（若有開啟電子郵件驗證）。');
+                alert('註冊成功！請檢查信箱確認驗證信。');
             } else {
                 // 登入邏輯
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -34,7 +34,7 @@ const Auth = () => {
             <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-2xl shadow-xl border border-gray-100">
                 <div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        {isSignUp ? '建立新帳號' : '歡迎回來'}
+                        {isSignUp ? '建立新帳號' : '待辦事項'}
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
                         {isSignUp ? '加入我們，開始管理你的待辦事項' : '請登入以存取你的清單'}
